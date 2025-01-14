@@ -1,0 +1,13 @@
+body {
+    font-family:'Courier New', Courier, monospace;
+    text-align: center;
+}
+
+#gameContainer {
+  width: 100%;
+}
+
+#board {
+    background-color: lightgray;
+    border-bottom: 1px solid black;
+}
