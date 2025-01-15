@@ -8,12 +8,16 @@ import {MatButtonModule} from '@angular/material/button';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, MatButtonModule, MatDividerModule, MatIconModule],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
 export class AppComponent {
   title = 'Hoppy-Cappy';
+
+  onClickPause() {
+    pauseGame();
+  }
 }
 
 // game container
@@ -32,6 +36,8 @@ let dinoHeight;
 let dinoX;
 let dinoY;
 let dinoImg;
+let dinoRun1Img;
+let dinoRun2Img;
 
 let dino = {
     x : dinoX,
@@ -59,6 +65,7 @@ let velocityY;
 let gravity;
 
 let gameOver;
+let gamePause;
 let score;
 
 
@@ -76,6 +83,7 @@ function initializeWorld() {
   board = <HTMLCanvasElement>document.getElementById("board")
   context = <CanvasRenderingContext2D>board.getContext("2d");  // used for drawing on the board
   gameOver = false;
+  gamePause = false
   score = 0;
 
   let percentage = gameContainer.clientWidth/boardInitWidth;
@@ -90,8 +98,8 @@ function initializeWorld() {
 
 function initializeEngine(perc) {
   velocityX = -4*perc; //cactus moving left speed
-  velocityY = 4*perc;
-  gravity = .2*perc;
+  velocityY = 5*perc;
+  gravity = .25*perc;
 }
 
 
@@ -104,8 +112,8 @@ function initializeBoard(perc) {
 
 
 function initializePlayer(perc) {
-  dinoWidth = 88*perc;
-  dinoHeight = 94*perc;
+  dinoWidth = 48*perc;
+  dinoHeight = 54*perc;
   dinoX = 50*perc;
   dinoY = (boardHeight - dinoHeight);
   dino = {
@@ -120,6 +128,12 @@ function initializePlayer(perc) {
   dinoImg.onload = function() {
     context.drawImage(dinoImg, dino.x, dino.y, dino.width, dino.height);
   }
+
+  dinoRun1Img = new Image();
+  dinoRun1Img.src = "../assets/img/dino-duck1.png";
+
+  dinoRun2Img = new Image();
+  dinoRun2Img.src = "../assets/img/dino-duck1.png";
 }
 
 
@@ -146,13 +160,18 @@ function initializeProps(perc) {
 function update() {
   requestAnimationFrame(update);
 
-  if (!gameOver) {
+  if (!gameOver && !gamePause) {
     context.clearRect(0, 0, board.width, board.height);
 
     //dino
     velocityY += gravity;
     dino.y = Math.min(dino.y + velocityY, dinoY); //apply gravity to current dino.y, making sure it doesn't exceed the ground
-    context.drawImage(dinoImg, dino.x, dino.y, dino.width, dino.height);
+    if (dino.y != dinoY) {
+      if (Math.round(dino.y%2) == 0) context.drawImage(dinoRun1Img, dino.x, dino.y, dino.width, dino.height);
+      else context.drawImage(dinoRun2Img, dino.x, dino.y, dino.width, dino.height);
+    } else {
+      context.drawImage(dinoImg, dino.x, dino.y, dino.width, dino.height);
+    }
 
     //cactus
     for (let i = 0; i < cactusArray.length; i++) {
@@ -162,10 +181,6 @@ function update() {
 
       if (detectCollision(dino, cactus)) {
         gameOver = true;
-        dinoImg.src = "../assets/img/dino-dead.png";
-        dinoImg.onload = function() {
-          context.drawImage(dinoImg, dino.x, dino.y, dino.width, dino.height);
-        }
       }
     }
 
@@ -215,7 +230,7 @@ function placeCactus() {
 
 function moveDino(e) {
   if (((e as KeyboardEvent && (e.code == "Space" || e.code == "ArrowUp")) || e as TouchEvent)) {
-    if (!gameOver && dino.y == dinoY) {
+    if (!gameOver && !gamePause && dino.y == dinoY) {
         let percentage = gameContainer.clientWidth/boardInitWidth;
         if (percentage > 1) percentage = 1;
 
@@ -241,4 +256,9 @@ function resetGame() {
   context.clearRect(0, 0, board.width, board.height);
   for (let i = 0; i < cactusArray.length; i++) cactusArray.pop();
   initializeWorld();
+}
+
+
+function pauseGame() {
+  gamePause = !gamePause;
 }
