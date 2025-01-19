@@ -5,7 +5,6 @@ import {MatDividerModule} from '@angular/material/divider';
 import {MatButtonModule} from '@angular/material/button';
 
 
-
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, MatButtonModule, MatDividerModule, MatIconModule],
@@ -20,15 +19,17 @@ export class AppComponent {
   }
 }
 
-// game container
+
+// Game container
 let gameContainer : HTMLDivElement;
 
-// board
+
+// Board
 let board : HTMLCanvasElement;
-let context : CanvasRenderingContext2D;
-const boardInitWidth = 750;
+let boardMaxWidth;
 let boardWidth;
 let boardHeight;
+let context : CanvasRenderingContext2D;
 
 // Cappy
 let cappyWidth;
@@ -38,7 +39,6 @@ let cappyY;
 let cappyRunImg;
 const CAPPY_HEIGHT = 32;
 const CAPPY_WIDTH = 64;
-
 let cappy = {
   x : cappyX,
   y : cappyY,
@@ -46,7 +46,8 @@ let cappy = {
   height : cappyHeight
 }
 
-//cactus
+
+// Cactus
 let cactusArray;
 let cactus1Width;
 let cactus2Width;
@@ -54,21 +55,32 @@ let cactus3Width;
 let cactusHeight;
 let cactusX;
 let cactusY;
-
 let cactus1Img;
 let cactus2Img;
 let cactus3Img;
 
-//physics
+
+// Physics
 let velocityX; // cactus moving left speed
 let velocityY;
 let gravity;
 
+
+// Animations
+let cappyRunFrameRow = 0;
+const cappyRunMaxRow = 1;
+const cappyRunMinRow = 0;
+let gameFrame = 0;
+const staggerFrames = 20;
+
+
+// Others
 let gameOver;
 let gamePause;
 let score;
 
 
+// Main
 window.onload = function() {
   initializeWorld();
   requestAnimationFrame(update);
@@ -78,43 +90,46 @@ window.onload = function() {
 }
 
 
+// Initialize World
 function initializeWorld() {
   gameContainer = <HTMLDivElement>document.getElementById("gameContainer")
   board = <HTMLCanvasElement>document.getElementById("board")
   context = <CanvasRenderingContext2D>board.getContext("2d");  // used for drawing on the board
   gameOver = false;
-  gamePause = false
+  gamePause = true;
   score = 0;
 
-  let percentage = gameContainer.clientWidth/boardInitWidth;
-  if (percentage > 1) percentage = 1;
-
-  initializeEngine(percentage);
-  initializeBoard(percentage);
-  initializePlayer(percentage);
-  initializeProps(percentage);
+  initializeEngine();
+  initializeBoard();
+  initializePlayer();
+  initializeProps();
 }
 
 
-function initializeEngine(perc) {
-  velocityX = -4*perc; //cactus moving left speed
-  velocityY = 5*perc;
-  gravity = .25*perc;
+// Initialize Engine
+function initializeEngine() {
+  velocityX = -4; //cactus moving left speed
+  velocityY = 5;
+  gravity = .25;
 }
 
 
-function initializeBoard(perc) {
-  boardWidth = 750*perc;
+// Initialize Board
+function initializeBoard() {
+  boardMaxWidth = 850;
+  boardWidth = gameContainer.clientWidth > boardMaxWidth ? boardMaxWidth : gameContainer.clientWidth;
   boardHeight = 400;
   board.height = boardHeight;
   board.width = boardWidth;
+
 }
 
 
-function initializePlayer(perc) {
+// Initialize Player
+function initializePlayer() {
   cappyWidth = 32;
   cappyHeight = 32;
-  cappyX = 50;
+  cappyX = 25;
   cappyY = (boardHeight - cappyHeight);
   cappy = {
     x : cappyX,
@@ -131,26 +146,28 @@ function initializePlayer(perc) {
 }
 
 
-function initializeProps(perc) {
+// Initialize Props/Items/Cactus
+function initializeProps() {
   cactusArray = [];
-  cactus1Width = 64/2 + 64*perc;
-  cactus2Width = 64/2 + 64*perc;
-  cactus3Width = 64/2 + 64*perc;
-  cactusHeight = 64/2 + 64*perc;
-  cactusX = 700*perc;
+  cactus1Width = 64;
+  cactus2Width = 64;
+  cactus3Width = 64;
+  cactusHeight = 64*1.5 ;
+  cactusX = boardWidth;
   cactusY = (boardHeight - cactusHeight) + 15;
 
   cactus1Img = new Image();
   cactus1Img.src = "../assets/img/cactus1.png";
 
   cactus2Img = new Image();
-  cactus2Img.src = "../assets/img/cactus1.png";
+  cactus2Img.src = "../assets/img/cactus2.png";
 
   cactus3Img = new Image();
-  cactus3Img.src = "../assets/img/cactus1.png";
+  cactus3Img.src = "../assets/img/cactus3.png";
 }
 
 
+// Update. Anmimations.
 function update() {
   requestAnimationFrame(update);
 
@@ -159,14 +176,14 @@ function update() {
 
     // Cappy
     velocityY += gravity;
-    cappy.y = Math.min(cappy.y + velocityY, cappyY); //apply gravity to current cappy.y, making sure it doesn't exceed the ground
+    cappy.y = Math.min(cappy.y + velocityY, cappyY); // Apply gravity to current cappy.y, making sure it doesn't exceed the ground
     drawCappy("run");
 
     //cactus
     for (let i = 0; i < cactusArray.length; i++) {
       let cactus = cactusArray[i];
       cactus.x += velocityX;
-      context.drawImage(cactus.img, cactus.x, cactus.y, cactus.width, cactus.height);
+      context.drawImage(cactus.img, cactus.x , cactus.y, cactus.width, cactus.height);
 
       if (detectCollision(cappy, cactus)) {
         gameOver = true;
@@ -181,8 +198,10 @@ function update() {
   }
 }
 
+
+// Place Cactus
 function placeCactus() {
-    if (gameOver) {
+    if (gameOver || gamePause) {
         return;
     }
 
@@ -196,7 +215,7 @@ function placeCactus() {
     }
 
     let placeCactusChance = Math.random(); //0 - 0.9999...
-
+    placeCactusChance = 0.49;
     if (placeCactusChance > .75) { //25% you get cactus3
       cactus.img = cactus3Img;
       cactus.width = cactus3Width;
@@ -216,18 +235,19 @@ function placeCactus() {
     }
 }
 
+
+// Move Player
 function moveCappy(e) {
-  if (((e as KeyboardEvent && (e.code == "Space" || e.code == "ArrowUp")) || e as TouchEvent)) {
+  if ((e as KeyboardEvent|| e as TouchEvent)) {
     if (e.type == "touchstart") {
       if (e.targetTouches[0].target.id != "board") return;
+    } else if ((e.code != "Space" && e.code != "ArrowUp")) {
+      return;
     }
 
     if (!gameOver && !gamePause && cappy.y == cappyY) {
-        let percentage = gameContainer.clientWidth/boardInitWidth;
-        if (percentage > 1) percentage = 1;
-
         //jump
-        velocityY = -12.5*percentage;
+        velocityY = -12.5 +  (-0.5 * getZoomPercentage());
       } else if (gameOver) {
         resetGame();
       }
@@ -235,14 +255,16 @@ function moveCappy(e) {
 }
 
 
+// Detect Any Collision
 function detectCollision(a, b) {
-  return a.x < b.x + b.width &&   //a's top left corner doesn't reach b's top right corner
-          a.x + a.width > b.x &&   //a's top right corner passes b's top left corner
-          a.y < b.y + b.height &&  //a's top left corner doesn't reach b's bottom left corner
-          a.y + a.height > b.y;    //a's bottom left corner passes b's top left corner
+  return a.x < b.x + (b.width*0.50) &&   //a's top left corner doesn't reach b's top right corner
+          a.x + (a.width*0.50) > b.x &&   //a's top right corner passes b's top left corner
+          a.y < b.y + (b.height) &&  //a's top left corner doesn't reach b's bottom left corner
+          a.y + (a.height*0.50) > b.y;    //a's bottom left corner passes b's top left corner
 }
 
 
+// Reset Game
 function resetGame() {
   // Clear all:
   context.clearRect(0, 0, board.width, board.height);
@@ -251,17 +273,14 @@ function resetGame() {
 }
 
 
+// Pause Game
 function pauseGame() {
   gamePause = !gamePause;
 }
 
 
-let cappyRunFrameRow = 0;
-const cappyRunMaxRow = 1;
-const cappyRunMinRow = 0;
-let gameFrame = 0;
-const staggerFrames = 20;
 
+// Draw Player
 function drawCappy(key) {
   if (key == "run") {
     context.drawImage(cappyRunImg, cappy.width*cappyRunFrameRow, 0, cappy.width, cappy.height, cappy.x, cappy.y, cappy.width, cappy.height);
@@ -272,4 +291,12 @@ function drawCappy(key) {
 
     gameFrame++;
   }
+}
+
+
+// Get Zoom Percentage
+function getZoomPercentage() {
+  let percentage = gameContainer.clientWidth/boardMaxWidth;
+  if (percentage > 1) percentage = 1;
+  return percentage;
 }
