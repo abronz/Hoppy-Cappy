@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import {MatIconModule} from '@angular/material/icon';
-import {MatDividerModule} from '@angular/material/divider';
-import {MatButtonModule} from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatButtonModule } from '@angular/material/button';
 
 
 @Component({
@@ -11,17 +11,20 @@ import {MatButtonModule} from '@angular/material/button';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
+
+
 export class AppComponent {
   title = 'Hoppy-Cappy';
 
   onClickPause() {
-    pauseGame();
+    toggleGame();
   }
 }
 
 
 // Game container
 let gameContainer : HTMLDivElement;
+let context : CanvasRenderingContext2D;
 
 
 // Board
@@ -29,7 +32,6 @@ let board : HTMLCanvasElement;
 let boardMaxWidth;
 let boardWidth;
 let boardHeight;
-let context : CanvasRenderingContext2D;
 
 // Cappy
 let cappyWidth;
@@ -37,8 +39,6 @@ let cappyHeight;
 let cappyX;
 let cappyY;
 let cappyRunImg;
-const CAPPY_HEIGHT = 32;
-const CAPPY_WIDTH = 64;
 let cappy = {
   x : cappyX,
   y : cappyY,
@@ -58,6 +58,14 @@ let cactusY;
 let cactus1Img;
 let cactus2Img;
 let cactus3Img;
+
+
+// Ground
+let groundWidth;
+let groundHeight;
+let groundX;
+let groundY;
+let groundImg;
 
 
 // Physics
@@ -80,16 +88,6 @@ let gamePause;
 let score;
 
 
-// Main
-window.onload = function() {
-  initializeWorld();
-  requestAnimationFrame(update);
-  setInterval(placeCactus, 1000); //1000 milliseconds = 1 second
-  document.addEventListener("keydown", moveCappy);
-  document.addEventListener("touchstart", moveCappy);
-}
-
-
 // Initialize World
 function initializeWorld() {
   gameContainer = <HTMLDivElement>document.getElementById("gameContainer")
@@ -108,9 +106,9 @@ function initializeWorld() {
 
 // Initialize Engine
 function initializeEngine() {
-  velocityX = -4; //cactus moving left speed
+  velocityX = -2; //cactus moving left speed
   velocityY = 5;
-  gravity = .25;
+  gravity = .15;
 }
 
 
@@ -118,6 +116,7 @@ function initializeEngine() {
 function initializeBoard() {
   boardMaxWidth = 850;
   boardWidth = gameContainer.clientWidth > boardMaxWidth ? boardMaxWidth : gameContainer.clientWidth;
+  gameContainer
   boardHeight = 400;
   board.height = boardHeight;
   board.width = boardWidth;
@@ -148,13 +147,26 @@ function initializePlayer() {
 
 // Initialize Props/Items/Cactus
 function initializeProps() {
+  // Ground
+  groundHeight = 10;
+  groundWidth = 850;
+  groundX = 0;
+  groundY = (boardHeight - groundHeight);
+
+  groundImg = new Image();
+  groundImg.src = "../assets/img/ground.png";
+  groundImg.onload = function() {
+    drawGround();
+  }
+
+  // Cactus
   cactusArray = [];
-  cactus1Width = 64;
+  cactus1Width = 38;
   cactus2Width = 64;
-  cactus3Width = 64;
+  cactus3Width = 80;
   cactusHeight = 64*1.5 ;
   cactusX = boardWidth;
-  cactusY = (boardHeight - cactusHeight) + 15;
+  cactusY = (boardHeight - cactusHeight) + 15 - groundHeight;
 
   cactus1Img = new Image();
   cactus1Img.src = "../assets/img/cactus1.png";
@@ -167,11 +179,21 @@ function initializeProps() {
 }
 
 
+// Main
+window.onload = function() {
+  initializeWorld();
+  requestAnimationFrame(update);
+  setInterval(placeCactus, 1000); //1000 milliseconds = 1 second
+  document.addEventListener("keydown", moveCappy);
+  document.addEventListener("touchstart", moveCappy);
+}
+
+
 // Update. Anmimations.
 function update() {
-  requestAnimationFrame(update);
-
   if (!gameOver && !gamePause) {
+    requestAnimationFrame(update);
+    // Clear
     context.clearRect(0, 0, board.width, board.height);
 
     // Cappy
@@ -179,18 +201,13 @@ function update() {
     cappy.y = Math.min(cappy.y + velocityY, cappyY); // Apply gravity to current cappy.y, making sure it doesn't exceed the ground
     drawCappy("run");
 
-    //cactus
-    for (let i = 0; i < cactusArray.length; i++) {
-      let cactus = cactusArray[i];
-      cactus.x += velocityX;
-      context.drawImage(cactus.img, cactus.x , cactus.y, cactus.width, cactus.height);
+    // Cactus
+    drawCactus();
 
-      if (detectCollision(cappy, cactus)) {
-        gameOver = true;
-      }
-    }
+    // Ground:
+    drawGround();
 
-    // score
+    // Score
     context.fillStyle="black";
     context.font="20px courier";
     score++;
@@ -201,38 +218,38 @@ function update() {
 
 // Place Cactus
 function placeCactus() {
-    if (gameOver || gamePause) {
-        return;
-    }
+  if (gameOver || gamePause) {
+    return;
+  }
 
-    //place cactus
-    let cactus = {
-        img : null,
-        x : cactusX,
-        y : cactusY,
-        width : null,
-        height: cactusHeight
-    }
+  //place cactus
+  let cactus = {
+      img : null,
+      x : cactusX,
+      y : cactusY,
+      width : null,
+      height: cactusHeight
+  }
 
-    let placeCactusChance = Math.random(); //0 - 0.9999...
-    placeCactusChance = 0.49;
-    if (placeCactusChance > .75) { //25% you get cactus3
-      cactus.img = cactus3Img;
-      cactus.width = cactus3Width;
-      cactusArray.push(cactus);
-    } else if (placeCactusChance > .50) { //50% you get cactus2
-      cactus.img = cactus2Img;
-      cactus.width = cactus2Width;
-      cactusArray.push(cactus);
-    } else {
-      cactus.img = cactus1Img;
-      cactus.width = cactus1Width;
-      cactusArray.push(cactus);
-    }
+  let placeCactusChance = Math.random(); // 0 - 0.9999...
 
-    if (cactusArray.length > 5) {
-        cactusArray.shift(); //remove the first element from the array so that the array doesn't constantly grow
-    }
+  if (placeCactusChance > .75) { //25% you get cactus3
+    cactus.img = cactus3Img;
+    cactus.width = cactus3Width;
+    cactusArray.push(cactus);
+  } else if (placeCactusChance > .50) { // 50% you get cactus2
+    cactus.img = cactus2Img;
+    cactus.width = cactus2Width;
+    cactusArray.push(cactus);
+  } else {
+    cactus.img = cactus1Img;
+    cactus.width = cactus1Width;
+    cactusArray.push(cactus);
+  }
+
+  if (cactusArray.length > 5) {
+      cactusArray.shift(); //remove the first element from the array so tat the array doesn't constantly grow
+  }
 }
 
 
@@ -247,7 +264,7 @@ function moveCappy(e) {
 
     if (!gameOver && !gamePause && cappy.y == cappyY) {
         //jump
-        velocityY = -12.5 +  (-0.5 * getZoomPercentage());
+        velocityY = -6.5 +  (-0.5 * getZoomPercentage());
       } else if (gameOver) {
         resetGame();
       }
@@ -257,10 +274,10 @@ function moveCappy(e) {
 
 // Detect Any Collision
 function detectCollision(a, b) {
-  return a.x < b.x + (b.width*0.50) &&   //a's top left corner doesn't reach b's top right corner
-          a.x + (a.width*0.50) > b.x &&   //a's top right corner passes b's top left corner
+  return a.x < b.x + (b.width*0.75) &&   //a's top left corner doesn't reach b's top right corner
+          a.x + (a.width) > b.x &&   //a's top right corner passes b's top left corner
           a.y < b.y + (b.height) &&  //a's top left corner doesn't reach b's bottom left corner
-          a.y + (a.height*0.50) > b.y;    //a's bottom left corner passes b's top left corner
+          a.y + (a.height*0.5) > b.y;    //a's bottom left corner passes b's top left corner
 }
 
 
@@ -273,9 +290,11 @@ function resetGame() {
 }
 
 
-// Pause Game
-function pauseGame() {
+// Toggle Game
+function toggleGame() {
   gamePause = !gamePause;
+
+  if (!gamePause) update();
 }
 
 
@@ -283,7 +302,7 @@ function pauseGame() {
 // Draw Player
 function drawCappy(key) {
   if (key == "run") {
-    context.drawImage(cappyRunImg, cappy.width*cappyRunFrameRow, 0, cappy.width, cappy.height, cappy.x, cappy.y, cappy.width, cappy.height);
+    context.drawImage(cappyRunImg, cappy.width*cappyRunFrameRow, 0, cappy.width, cappy.height, cappy.x, cappy.y - groundHeight, cappy.width, cappy.height);
     if (gameFrame % staggerFrames == 0) {
       cappyRunFrameRow++;
       if (cappyRunFrameRow > cappyRunMaxRow) cappyRunFrameRow = cappyRunMinRow;
@@ -294,9 +313,31 @@ function drawCappy(key) {
 }
 
 
+function drawGround() {
+  groundX += velocityX;
+  context.drawImage(groundImg, groundX , groundY, groundWidth, groundHeight);
+  context.drawImage(groundImg, groundX + groundWidth , groundY, groundWidth, groundHeight);
+  if (groundX < 0 - groundWidth) groundX = 0;
+}
+
+
+function drawCactus() {
+  for (let i = 0; i < cactusArray.length; i++) {
+    let cactus = cactusArray[i];
+    cactus.x += velocityX;
+    context.drawImage(cactus.img, cactus.x , cactus.y, cactus.width, cactus.height);
+
+    if (detectCollision(cappy, cactus)) {
+      gameOver = true;
+    }
+  }
+}
+
+
 // Get Zoom Percentage
 function getZoomPercentage() {
   let percentage = gameContainer.clientWidth/boardMaxWidth;
   if (percentage > 1) percentage = 1;
   return percentage;
 }
+

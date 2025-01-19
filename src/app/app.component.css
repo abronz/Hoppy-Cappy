@@ -1,3 +1,17 @@
+* {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  font-size: 100%;
+  vertical-align: baseline;
+}
+
+main {
+  background-color: rgb(255, 169, 169);
+  height: 100%;
+}
+
 body {
     font-family:'Courier New', Courier, monospace;
     text-align: center;
@@ -7,7 +21,16 @@ body {
 }
 
 #gameContainer {
-  width: 100%;
+  display: inline-flexbox;
+  position: relative;
+}
+
+#controls {
+  top: 0;
+  right : 0;
+  margin-right: 10px;
+  margin-top: 10px;
+  position: absolute;
 }
 
 #board {
@@ -16,5 +39,5 @@ body {
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
-    border-bottom: 1px solid black;
+    border: 1px solid black;
 }
