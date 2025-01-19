@@ -30,20 +30,20 @@ const boardInitWidth = 750;
 let boardWidth;
 let boardHeight;
 
-//dino
-let dinoWidth;
-let dinoHeight;
-let dinoX;
-let dinoY;
-let dinoImg;
-let dinoRun1Img;
-let dinoRun2Img;
+// Cappy
+let cappyWidth;
+let cappyHeight;
+let cappyX;
+let cappyY;
+let cappyRunImg;
+const CAPPY_HEIGHT = 32;
+const CAPPY_WIDTH = 64;
 
-let dino = {
-    x : dinoX,
-    y : dinoY,
-    width : dinoWidth,
-    height : dinoHeight
+let cappy = {
+  x : cappyX,
+  y : cappyY,
+  width : cappyWidth,
+  height : cappyHeight
 }
 
 //cactus
@@ -73,8 +73,8 @@ window.onload = function() {
   initializeWorld();
   requestAnimationFrame(update);
   setInterval(placeCactus, 1000); //1000 milliseconds = 1 second
-  document.addEventListener("keydown", moveDino);
-  document.addEventListener("touchstart", moveDino);
+  document.addEventListener("keydown", moveCappy);
+  document.addEventListener("touchstart", moveCappy);
 }
 
 
@@ -105,55 +105,49 @@ function initializeEngine(perc) {
 
 function initializeBoard(perc) {
   boardWidth = 750*perc;
-  boardHeight = 250*perc;
+  boardHeight = 400;
   board.height = boardHeight;
   board.width = boardWidth;
 }
 
 
 function initializePlayer(perc) {
-  dinoWidth = 48*perc;
-  dinoHeight = 54*perc;
-  dinoX = 50*perc;
-  dinoY = (boardHeight - dinoHeight);
-  dino = {
-    x : dinoX,
-    y : dinoY,
-    width : dinoWidth,
-    height : dinoHeight
-}
-
-  dinoImg = new Image();
-  dinoImg.src = "../assets/img/dino.png";
-  dinoImg.onload = function() {
-    context.drawImage(dinoImg, dino.x, dino.y, dino.width, dino.height);
+  cappyWidth = 32;
+  cappyHeight = 32;
+  cappyX = 50;
+  cappyY = (boardHeight - cappyHeight);
+  cappy = {
+    x : cappyX,
+    y : cappyY,
+    width : cappyWidth,
+    height : cappyHeight
   }
 
-  dinoRun1Img = new Image();
-  dinoRun1Img.src = "../assets/img/dino-duck1.png";
-
-  dinoRun2Img = new Image();
-  dinoRun2Img.src = "../assets/img/dino-duck1.png";
+  cappyRunImg = new Image();
+  cappyRunImg.src = "../assets/img/cappyRun.png";
+  cappyRunImg.onload = function() {
+    drawCappy("run");
+  }
 }
 
 
 function initializeProps(perc) {
   cactusArray = [];
-  cactus1Width = 34*perc;
-  cactus2Width = 69*perc;
-  cactus3Width = 102*perc;
-  cactusHeight = 70*perc;
+  cactus1Width = 64/2 + 64*perc;
+  cactus2Width = 64/2 + 64*perc;
+  cactus3Width = 64/2 + 64*perc;
+  cactusHeight = 64/2 + 64*perc;
   cactusX = 700*perc;
-  cactusY = (boardHeight - cactusHeight);
+  cactusY = (boardHeight - cactusHeight) + 15;
 
   cactus1Img = new Image();
   cactus1Img.src = "../assets/img/cactus1.png";
 
   cactus2Img = new Image();
-  cactus2Img.src = "../assets/img/cactus2.png";
+  cactus2Img.src = "../assets/img/cactus1.png";
 
   cactus3Img = new Image();
-  cactus3Img.src = "../assets/img/cactus3.png";
+  cactus3Img.src = "../assets/img/cactus1.png";
 }
 
 
@@ -163,15 +157,10 @@ function update() {
   if (!gameOver && !gamePause) {
     context.clearRect(0, 0, board.width, board.height);
 
-    //dino
+    // Cappy
     velocityY += gravity;
-    dino.y = Math.min(dino.y + velocityY, dinoY); //apply gravity to current dino.y, making sure it doesn't exceed the ground
-    if (dino.y != dinoY) {
-      if (Math.round(dino.y%2) == 0) context.drawImage(dinoRun1Img, dino.x, dino.y, dino.width, dino.height);
-      else context.drawImage(dinoRun2Img, dino.x, dino.y, dino.width, dino.height);
-    } else {
-      context.drawImage(dinoImg, dino.x, dino.y, dino.width, dino.height);
-    }
+    cappy.y = Math.min(cappy.y + velocityY, cappyY); //apply gravity to current cappy.y, making sure it doesn't exceed the ground
+    drawCappy("run");
 
     //cactus
     for (let i = 0; i < cactusArray.length; i++) {
@@ -179,7 +168,7 @@ function update() {
       cactus.x += velocityX;
       context.drawImage(cactus.img, cactus.x, cactus.y, cactus.width, cactus.height);
 
-      if (detectCollision(dino, cactus)) {
+      if (detectCollision(cappy, cactus)) {
         gameOver = true;
       }
     }
@@ -208,16 +197,15 @@ function placeCactus() {
 
     let placeCactusChance = Math.random(); //0 - 0.9999...
 
-    if (placeCactusChance > .90) { //10% you get cactus3
+    if (placeCactusChance > .75) { //25% you get cactus3
       cactus.img = cactus3Img;
       cactus.width = cactus3Width;
       cactusArray.push(cactus);
-    } else if (placeCactusChance > .70) { //30% you get cactus2
+    } else if (placeCactusChance > .50) { //50% you get cactus2
       cactus.img = cactus2Img;
       cactus.width = cactus2Width;
-
       cactusArray.push(cactus);
-    } else if (placeCactusChance > .50) { //50% you get cactus1
+    } else {
       cactus.img = cactus1Img;
       cactus.width = cactus1Width;
       cactusArray.push(cactus);
@@ -228,14 +216,18 @@ function placeCactus() {
     }
 }
 
-function moveDino(e) {
+function moveCappy(e) {
   if (((e as KeyboardEvent && (e.code == "Space" || e.code == "ArrowUp")) || e as TouchEvent)) {
-    if (!gameOver && !gamePause && dino.y == dinoY) {
+    if (e.type == "touchstart") {
+      if (e.targetTouches[0].target.id != "board") return;
+    }
+
+    if (!gameOver && !gamePause && cappy.y == cappyY) {
         let percentage = gameContainer.clientWidth/boardInitWidth;
         if (percentage > 1) percentage = 1;
 
         //jump
-        velocityY = -10*percentage;
+        velocityY = -12.5*percentage;
       } else if (gameOver) {
         resetGame();
       }
@@ -261,4 +253,23 @@ function resetGame() {
 
 function pauseGame() {
   gamePause = !gamePause;
+}
+
+
+let cappyRunFrameRow = 0;
+const cappyRunMaxRow = 1;
+const cappyRunMinRow = 0;
+let gameFrame = 0;
+const staggerFrames = 20;
+
+function drawCappy(key) {
+  if (key == "run") {
+    context.drawImage(cappyRunImg, cappy.width*cappyRunFrameRow, 0, cappy.width, cappy.height, cappy.x, cappy.y, cappy.width, cappy.height);
+    if (gameFrame % staggerFrames == 0) {
+      cappyRunFrameRow++;
+      if (cappyRunFrameRow > cappyRunMaxRow) cappyRunFrameRow = cappyRunMinRow;
+    }
+
+    gameFrame++;
+  }
 }
