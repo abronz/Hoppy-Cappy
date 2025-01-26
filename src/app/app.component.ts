@@ -19,6 +19,10 @@ export class AppComponent {
   onClickPause() {
     toggleGame();
   }
+
+  onClickPlay() {
+    startGame();
+  }
 }
 
 
@@ -32,6 +36,11 @@ let board : HTMLCanvasElement;
 let boardMaxWidth;
 let boardWidth;
 let boardHeight;
+
+
+// Controls
+let controls :HTMLDivElement;
+
 
 // Cappy
 let cappyWidth;
@@ -91,11 +100,13 @@ let score;
 // Initialize World
 function initializeWorld() {
   gameContainer = <HTMLDivElement>document.getElementById("gameContainer")
+  controls = <HTMLDivElement>document.getElementById("controls")
   board = <HTMLCanvasElement>document.getElementById("board")
   context = <CanvasRenderingContext2D>board.getContext("2d");  // used for drawing on the board
   gameOver = false;
   gamePause = true;
   score = 0;
+  controls.hidden = !gamePause;
 
   initializeEngine();
   initializeBoard();
@@ -116,10 +127,12 @@ function initializeEngine() {
 function initializeBoard() {
   boardMaxWidth = 850;
   boardWidth = gameContainer.clientWidth > boardMaxWidth ? boardMaxWidth : gameContainer.clientWidth;
-  gameContainer
   boardHeight = 400;
   board.height = boardHeight;
   board.width = boardWidth;
+
+  // Resize gameContainer to board size.
+  gameContainer.setAttribute("style", "width:" + boardWidth + "px");
 
 }
 
@@ -265,8 +278,6 @@ function moveCappy(e) {
     if (!gameOver && !gamePause && cappy.y == cappyY) {
         //jump
         velocityY = -6.5 +  (-0.5 * getZoomPercentage());
-      } else if (gameOver) {
-        resetGame();
       }
     }
 }
@@ -295,6 +306,25 @@ function toggleGame() {
   gamePause = !gamePause;
 
   if (!gamePause) update();
+}
+
+
+// Try Start Game
+function startGame() {
+  if (gameOver) resetGame();
+  gameOver = false;
+  gamePause = false;
+  controls.hidden = !gamePause;
+  update();
+}
+
+
+// Try Stop Game
+function stopGame() {
+  gameOver = true;
+  gamePause = true;
+  controls.hidden = !gamePause;
+  update();
 }
 
 
@@ -328,7 +358,7 @@ function drawCactus() {
     context.drawImage(cactus.img, cactus.x , cactus.y, cactus.width, cactus.height);
 
     if (detectCollision(cappy, cactus)) {
-      gameOver = true;
+      stopGame();
     }
   }
 }

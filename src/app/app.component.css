@@ -9,15 +9,24 @@
 
 main {
   background-color: rgb(255, 169, 169);
+  background-image: url('../assets/img/background.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center center;
   height: 100%;
 }
 
 body {
     font-family:'Courier New', Courier, monospace;
     text-align: center;
+    font-size: 40px;
 }
 
-#content {
+#container {
+  max-width: 850px;
+  width: 100%;
+  height: auto;
+  margin: auto;
 }
 
 #gameContainer {
@@ -26,18 +35,48 @@ body {
 }
 
 #controls {
-  top: 0;
-  right : 0;
+  width: 100%;
+  bottom: 0;
+  height: 50%;
+  justify-content: center;
   margin-right: 10px;
   margin-top: 10px;
   position: absolute;
 }
 
+#playBtn {
+  /* padding: 10px 16px; */
+  background: rgb(245, 239, 220);
+  font-size: 18px;
+  font-weight: 100;
+  border-radius: 9px;
+  cursor: pointer;
+  border: none;
+  color: black;
+  animation: bounce 3s infinite;
+}
+@keyframes bounce {
+  0%, 25%, 50%, 75%, 90%, 100% {
+    transform: translateY(0);
+  }
+  15%, 40% {
+    transform: translateY(-20px);
+  }
+  65%, 80%  {
+    transform: translateY(-15px);
+  }
+  95%  {
+    transform: translateY(-5px);
+  }
+}
+
+
 #board {
     background-color: lightgray;
-    background-image: url('../assets/img/background.png');
+    background-image: url('../assets/img/gameBackground.png');
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
-    border: 1px solid black;
+    outline: 1px solid black;
+    z-index: 1;
 }

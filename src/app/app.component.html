@@ -2,14 +2,17 @@
   <div class="content">
     <body>
         <h1>Hoppy Cappy</h1>
-        <div id="gameContainer">
-          <canvas id="board">
-          </canvas>
-          <menu id="controls">
-            <button mat-flat-button (click)="onClickPause()">Basic</button>
-          </menu>
+        <div id ="container">
+          <div id="gameContainer">
+            <canvas id="board">
+            </canvas>
+            <div id="controls">
+              <button id="playBtn" mat-fab extended (click)="onClickPlay()">
+                Touch to Play
+              </button>
+            </div>
+          </div>
         </div>
-
     </body>
   </div>
 </main>
