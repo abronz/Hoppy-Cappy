@@ -1,15 +1,28 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Micro+5&display=swap" rel="stylesheet">
+
 <main class="main">
+  <mat-divider [vertical]="true"></mat-divider>
   <div class="content">
-    <body>
-        <h1>Hoppy Cappy</h1>
-        <div id ="container">
-          <div id="gameContainer">
+    <body id = "gameContainer">
+        <div id="titleContainer">
+          <h1 id="gameTitle">Hoppy Cappy</h1>
+        </div>
+        <div id ="boardOutContainer">
+          <div id="boardContainer">
             <canvas id="board">
             </canvas>
             <div id="controls">
               <button id="playBtn" mat-fab extended (click)="onClickPlay()">
-                Touch to Play
+                Touch to Jump
               </button>
+            </div>
+          </div>
+
+          <div id="rewardsContainer">
+            <div id="rewardsText">
+              <p>Survive to get rewards!</p>
             </div>
           </div>
         </div>

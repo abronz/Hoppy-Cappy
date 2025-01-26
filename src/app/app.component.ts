@@ -26,8 +26,10 @@ export class AppComponent {
 }
 
 
-// Game container
-let gameContainer : HTMLDivElement;
+// Containers
+let boardOutContainer : HTMLDivElement;
+let boardContainer : HTMLDivElement;;
+let titleContainer: HTMLDivElement;
 let context : CanvasRenderingContext2D;
 
 
@@ -99,15 +101,17 @@ let score;
 
 // Initialize World
 function initializeWorld() {
-  gameContainer = <HTMLDivElement>document.getElementById("gameContainer")
+  boardOutContainer = <HTMLDivElement>document.getElementById("boardOutContainer");
+  boardContainer = <HTMLDivElement>document.getElementById("boardContainer")
+  titleContainer = <HTMLDivElement>document.getElementById("titleContainer")
   controls = <HTMLDivElement>document.getElementById("controls")
   board = <HTMLCanvasElement>document.getElementById("board")
   context = <CanvasRenderingContext2D>board.getContext("2d");  // used for drawing on the board
   gameOver = false;
   gamePause = true;
   score = 0;
-  controls.hidden = !gamePause;
 
+  updateVisibles();
   initializeEngine();
   initializeBoard();
   initializePlayer();
@@ -126,14 +130,15 @@ function initializeEngine() {
 // Initialize Board
 function initializeBoard() {
   boardMaxWidth = 850;
-  boardWidth = gameContainer.clientWidth > boardMaxWidth ? boardMaxWidth : gameContainer.clientWidth;
+  let totalMargin = 10;
+  let currentClientWidth = boardOutContainer.clientWidth;
+  boardWidth = currentClientWidth > boardMaxWidth ? boardMaxWidth : currentClientWidth - totalMargin;
   boardHeight = 400;
   board.height = boardHeight;
   board.width = boardWidth;
 
-  // Resize gameContainer to board size.
-  gameContainer.setAttribute("style", "width:" + boardWidth + "px");
-
+  // Resize boardContainer to board size.
+  boardContainer.setAttribute("style", "width:" + boardWidth + "px");
 }
 
 
@@ -221,11 +226,22 @@ function update() {
     drawGround();
 
     // Score
-    context.fillStyle="black";
-    context.font="20px courier";
-    score++;
-    context.fillText(score.toString(), 5, 20);
+    updateScore();
   }
+}
+
+
+// Update Score
+function updateScore() {
+  context.fillStyle="white";
+  context.font = "20px 'Jersey 10', serif"
+  score++;
+  context.fillText(score.toString(), 5, 20);
+
+
+  if (score == 1000) console.log("WON 1");
+  if (score == 2000) console.log("WON 2");
+  if (score == 3000) console.log("WON 3");
 }
 
 
@@ -292,6 +308,13 @@ function detectCollision(a, b) {
 }
 
 
+// Update Menu Visiblity
+function updateVisibles() {
+  controls.hidden = !gamePause;
+  titleContainer.hidden = controls.hidden;
+}
+
+
 // Reset Game
 function resetGame() {
   // Clear all:
@@ -314,7 +337,7 @@ function startGame() {
   if (gameOver) resetGame();
   gameOver = false;
   gamePause = false;
-  controls.hidden = !gamePause;
+  updateVisibles();
   update();
 }
 
@@ -323,7 +346,7 @@ function startGame() {
 function stopGame() {
   gameOver = true;
   gamePause = true;
-  controls.hidden = !gamePause;
+  updateVisibles();
   update();
 }
 
@@ -366,7 +389,7 @@ function drawCactus() {
 
 // Get Zoom Percentage
 function getZoomPercentage() {
-  let percentage = gameContainer.clientWidth/boardMaxWidth;
+  let percentage = boardContainer.clientWidth/boardMaxWidth;
   if (percentage > 1) percentage = 1;
   return percentage;
 }
